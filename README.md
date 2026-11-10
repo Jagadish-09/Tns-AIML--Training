@@ -30,9 +30,18 @@ This project predicts retail store sales using Machine Learning. It uses store i
 - `.gitignore` – Files excluded from GitHub
 
 ## How to Run
-1. Install the required Python libraries using `pip install -r requirements.txt`.
-2. Run the Flask application using `python app.py`.
-3. Open `http://127.0.0.1:5000` in your browser.
+## How to Run
+
+1. Install the required libraries:
+   pip install -r requirements.txt
+
+2. Train the machine learning model:
+   python train_model.py
+
+3. Start the Flask application:
+   python app.py
+
+4. Open http://127.0.0.1:5000 in your browser.
 
 ## Project Type
 Machine Learning Web Application
