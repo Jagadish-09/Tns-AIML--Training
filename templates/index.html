@@ -1,0 +1,230 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Retail Sales Forecasting Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            margin: 0;
+            padding: 25px;
+        }
+
+        h1 {
+            color: #1e293b;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #00000010;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        #result {
+            color: #15803d;
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .chart-card {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 650px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Retail Sales Forecasting</h1>
+    <p class="subtitle">Machine Learning Based Sales Prediction Dashboard</p>
+
+    <div class="container">
+        <div class="card">
+    <h2>Total Predictions</h2>
+    <div id="totalPredictions" style="font-size: 30px; color: #2563eb; font-weight: bold;">
+        0
+    </div>
+    <p>Number of successful predictions</p>
+</div>
+<div class="card">
+    <h2>Total Predicted Sales</h2>
+    <div id="totalSales" style="font-size: 30px; color: #15803d; font-weight: bold;">
+        ₹ 0
+    </div>
+    <p>Combined predicted sales amount</p>
+</div>
+
+        <div class="card">
+            <h2>Enter Store Details</h2>
+
+            <form id="predictionForm">
+
+                <label>Store ID</label>
+                <input type="number" id="store" min="1" placeholder="Enter Store ID" required>
+
+                <label>Date</label>
+                <input type="date" id="date" required>
+
+                <label>Promotion</label>
+                <select id="promo">
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+
+                <label>State Holiday</label>
+                <select id="stateHoliday">
+                    <option value="0">No Holiday</option>
+                    <option value="a">Public Holiday</option>
+                    <option value="b">Easter Holiday</option>
+                    <option value="c">Christmas</option>
+                </select>
+
+                <label>School Holiday</label>
+                <select id="schoolHoliday">
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+
+                <button type="submit">Predict Sales</button>
+
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Prediction Result</h2>
+            <p>Your predicted sales amount:</p>
+            <div id="result">₹ 0.00</div>
+            <p id="message">Enter details to get a prediction.</p>
+        </div>
+
+        <div class="card chart-card">
+            <h2>Prediction History</h2>
+            <canvas id="salesChart"></canvas>
+        </div>
+
+    </div>
+
+    <script>
+        const labels = [];
+        const salesValues = [];
+        let totalSales = 0;
+        let totalPredictions = 0;
+
+        const chart = new Chart(document.getElementById("salesChart"), {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Predicted Sales",
+                    data: salesValues,
+                    borderColor: "#2563eb",
+                    backgroundColor: "#93c5fd",
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+
+        document.getElementById("predictionForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const result = document.getElementById("result");
+            const message = document.getElementById("message");
+
+            result.innerText = "Predicting...";
+            message.innerText = "";
+
+            const data = {
+                store: document.getElementById("store").value,
+                date: document.getElementById("date").value,
+                promo: document.getElementById("promo").value,
+                state_holiday: document.getElementById("stateHoliday").value,
+                school_holiday: document.getElementById("schoolHoliday").value
+            };
+
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const output = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(output.error || "Prediction failed");
+                }
+
+                const sales = output.predicted_sales;
+
+                result.innerText = "₹ " + sales.toLocaleString("en-IN");
+                message.innerText = "Prediction successful for Store " + output.store;
+
+                labels.push(output.date);
+                salesValues.push(sales);
+
+                chart.update();
+                totalPredictions++;
+
+document.getElementById("totalPredictions").innerText = totalPredictions;
+totalSales += sales;
+
+document.getElementById("totalSales").innerText =
+    "₹ " + totalSales.toLocaleString("en-IN");
+
+            } catch (error) {
+                result.innerText = "Error";
+                message.innerText = error.message;
+            }
+        });
+    </script>
+
+</body>
+</html>
